@@ -1,0 +1,13 @@
+--- a/src/hsm/cvc.c
++++ b/src/hsm/cvc.c
+@@ -195,8 +195,8 @@ static uint16_t asn1_cvc_cert_body(void *rsa_ecdsa,
+         car.data = (uint8_t *) dev_name;
+         car.len = dev_name_len;
+         if (dev_name == NULL) {
+-            car.data = (uint8_t *)"ESPICOHSMTR00001";
+-            car.len = (uint16_t)strlen((const char *)car.data);
++            car.data = (uint8_t *) pico_serial_str;
++            car.len = (uint16_t)strlen(pico_serial_str);
+         }
+     }
+     if (asn1_find_tag(&ctxi, 0x5f20, &chr) == false || asn1_len(&chr) == 0) {

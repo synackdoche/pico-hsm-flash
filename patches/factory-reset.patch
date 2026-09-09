@@ -1,0 +1,35 @@
+--- a/src/hsm/cmd_extras.c
++++ b/src/hsm/cmd_extras.c
+@@ -29,6 +29,7 @@
+ #define CMD_DATETIME 0xA
+ #define CMD_DYNOPS 0x6
+ #define CMD_SECURE_LOCK 0x3A
++#define CMD_FACTORY_RESET 0x0F
+ #define CMD_REBOOT 0xFB
+ #define SECURE_LOCK_KEY_AGREEMENT 0x1
+ #define SECURE_LOCK_ENABLE 0x2
+@@ -41,8 +42,8 @@
+ int cmd_extras(void) {
+     int cmd = P1(apdu);
+ #ifndef ENABLE_EMULATION
+-    // Only allow change PHY without PIN
+-    if (!isUserAuthenticated && cmd != CMD_PHY && cmd != CMD_MEMORY) {
++    // Only allow change PHY, memory, and factory-reset without PIN
++    if (!isUserAuthenticated && cmd != CMD_PHY && cmd != CMD_MEMORY && cmd != CMD_FACTORY_RESET) {
+         return SW_SECURITY_STATUS_NOT_SATISFIED();
+     }
+ #endif
+@@ -151,6 +152,13 @@
+             }
+         }
+     }
++    else if (cmd == CMD_FACTORY_RESET) {
++        extern uintptr_t end_rom_pool;
++        const uint8_t empty[8] = { 0 };
++        flash_program_block(end_rom_pool, empty, sizeof(empty));
++        initialize_flash(true);
++        scan_all();
++    }
+     else {
+         return SW_INCORRECT_P1P2();
+     }

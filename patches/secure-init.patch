@@ -1,0 +1,26 @@
+--- a/src/hsm/cmd_initialize.c
++++ b/src/hsm/cmd_initialize.c
+@@ -44,6 +44,23 @@
+         if (opts & HSM_OPT_SECURE_LOCK && !has_mkek_mask) {
+             return SW_SECURITY_STATUS_NOT_SATISFIED();
+         }
++        // Re-initializing an already-initialized token requires the current
++        // SO-PIN; otherwise C_InitToken is an unauthenticated wipe.
++        if (file_sopin && file_read_uint8(file_sopin) != 0) {
++            uint16_t vtag = 0x0;
++            uint8_t *vp = NULL, *vsopin = NULL;
++            uint16_t vlen = 0;
++            asn1_ctx_t vctx;
++            asn1_ctx_init(apdu.data, (uint16_t)apdu.nc, &vctx);
++            while (walk_tlv(&vctx, &vp, &vtag, &vlen, &vsopin)) {
++                if (vtag == 0x82) {
++                    break;
++                }
++            }
++            if (!vsopin || check_pin(file_sopin, vsopin, vlen) != SW_OK()) {
++                return SW_SECURITY_STATUS_NOT_SATISFIED();
++            }
++        }
+         int ret_mkek = load_mkek(mkek); //Try loading MKEK with previous session
+         initialize_flash(true);
+         scan_all();
