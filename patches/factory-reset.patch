@@ -1,0 +1,44 @@
+--- a/src/hsm/cmd_extras.c
++++ b/src/hsm/cmd_extras.c
+@@ -29,6 +29,7 @@
+ #define CMD_DATETIME 0xA
+ #define CMD_DYNOPS 0x6
+ #define CMD_SECURE_LOCK 0x3A
++#define CMD_FACTORY_RESET 0x0F
+ #define CMD_REBOOT 0xFB
+ #define SECURE_LOCK_KEY_AGREEMENT 0x1
+ #define SECURE_LOCK_ENABLE 0x2
+@@ -151,6 +152,13 @@ int cmd_extras(void) {
+             }
+         }
+     }
++    else if (cmd == CMD_FACTORY_RESET) {
++        extern uintptr_t end_rom_pool;
++        const uint8_t empty[8] = { 0 };
++        flash_program_block(end_rom_pool, empty, sizeof(empty));
++        initialize_flash(true);
++        scan_all();
++    }
+     else {
+         return SW_INCORRECT_P1P2();
+     }
+--- a/src/hsm/sc_hsm.c
++++ b/src/hsm/sc_hsm.c
+@@ -265,7 +265,7 @@ int parse_token_info(const file_t *f, int mode) {
+ #ifdef __FOR_CI
+     const char *label = "SmartCard-HSM";
+ #else
+-    const char *label = "Pico-HSM";
++    const char *label = "Pico-HSM-PATCHED_UNSAFE";
+ #endif
+     const char *manu = "Pol Henarejos";
+     if (mode == 1) {
+@@ -292,7 +292,7 @@ int parse_ef_dir(const file_t *f, int mode) {
+ #ifdef __FOR_CI
+     const char *label = "SmartCard-HSM";
+ #else
+-    const char *label = "Pico-HSM";
++    const char *label = "Pico-HSM-PATCHED_UNSAFE";
+ #endif
+     if (mode == 1) {
+         uint8_t *p = res_APDU;
